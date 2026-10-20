@@ -5,7 +5,6 @@
 \alias{acti_calculate_wear}
 \alias{acti_calculate_nonwear}
 \alias{acti_apply_cole_kripke}
-\alias{acti_apply_tudor_locke}
 \alias{acti_apply_sadeh}
 \title{Process Count Data}
 \usage{
@@ -14,7 +13,9 @@ acti_calculate_counts(
   epoch = 60L,
   resample = TRUE,
   lfe_select = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  fix_first_second = TRUE,
+  round_digits = NULL
 )
 
 acti_calculate_wear(
@@ -33,8 +34,6 @@ acti_calculate_nonwear(
 
 acti_apply_cole_kripke(data)
 
-acti_apply_tudor_locke(data, ...)
-
 acti_apply_sadeh(data, ...)
 }
 \arguments{
@@ -42,17 +41,27 @@ acti_apply_sadeh(data, ...)
 columns \code{axis1-3} and \code{counts}}
 
 \item{epoch}{epoch length in seconds.  Default is 60 seconds.
-See \code{agcounts::calculate_counts()}}
+See \link[agcounts:calculate_counts]{agcounts::calculate_counts}}
 
 \item{resample}{(recommended) resample the data to 30Hz using
 \link[actibase:acti_resample]{actibase::acti_resample} vs. using the resampling method from
 \link[agcounts:calculate_counts]{agcounts::calculate_counts}.}
 
 \item{lfe_select}{Apply the Actigraph Low Frequency Extension filter.
-See \code{agcounts::calculate_counts()}
+See \link[agcounts:calculate_counts]{agcounts::calculate_counts}}
+
+\item{verbose}{print diagnostic messages.  Either logical or integer, where
 higher values are higher levels of verbosity.}
 
-\item{verbose}{print diagnostic messages.  Either logical or integer, where}
+\item{fix_first_second}{Fix the first second bug in \code{agcounts}.  Appends
+replicated data of the first record if the first record is not an "even"
+epoch (e.g. 60 second epoch and data does not start at a 00 second).}
+
+\item{round_digits}{If not \code{NULL}, the number of decimal places the
+\code{X}/\code{Y}/\code{Z} values are rounded to after resampling and before counting.
+Use \code{3} to match ActiLife, which rounds GT3X data to 3 decimals (half away
+from zero, so \code{0.0625} becomes \code{0.063}, unlike \code{\link[base:round]{base::round()}}).  Useful if
+the data were read with more digits.  Default \code{NULL} does not round.}
 
 \item{method}{Method for detecting non-wear, either "choi" or "troiano",
 corresponding to \code{actigraph.sleepr::apply_choi()} or
@@ -76,6 +85,15 @@ A \code{data.frame} of transformed data
 Process Count Data
 
 Process Count Data
+}
+\details{
+The sampling frequency is only needed when \code{resample = FALSE};
+it is taken from the \code{sample_rate} attribute (or estimated from \code{time}).
+
+\code{acti_calculate_wear()}, \code{acti_apply_cole_kripke()}, and
+\code{acti_apply_sadeh()} require 60-second epochs.  Cole--Kripke, Sadeh, and
+\code{acti_calculate_wear(use_magnitude = FALSE)} score the vertical axis, so
+\code{data} must contain \code{axis1}; vector-magnitude-only counts are an error.
 }
 \note{
 This calls the downstream wear-processing helpers used by

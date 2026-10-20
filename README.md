@@ -6,6 +6,8 @@
 [![R-CMD-check](https://github.com/jhuwit/actimetrics/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jhuwit/actimetrics/actions/workflows/R-CMD-check.yaml)
 [![Codecov test
 coverage](https://codecov.io/gh/jhuwit/actimetrics/branch/main/graph/badge.svg)](https://app.codecov.io/gh/jhuwit/actimetrics?branch=main)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/actimetrics)](https://CRAN.R-project.org/package=actimetrics)
 <!-- badges: end -->
 
 # actimetrics
@@ -213,3 +215,8 @@ get_transformations(calibrated)
 #> [12] "acti_fill_zeros:filled_zeros"             
 #> [13] "acti_read_gt3x:data_read"
 ```
+
+## Funding
+
+This work was supported by NIH grant P30AG021334 and the Johns Hopkins
+Older Americans Independence Center (OAIC) Pepper Center grant.

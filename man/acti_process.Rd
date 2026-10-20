@@ -2,15 +2,18 @@
 % Please edit documentation in R/acti_process.R
 \name{acti_process}
 \alias{acti_process}
-\title{Process Count Data}
+\title{Process Raw data to Counts}
 \usage{
 acti_process(
   data,
   lfe_select = FALSE,
   method = c("choi", "troiano"),
   use_magnitude = TRUE,
+  calibrate = FALSE,
   verbose = TRUE,
-  ...
+  ...,
+  min_required = 1368L,
+  round_digits = NULL
 )
 }
 \arguments{
@@ -18,8 +21,7 @@ acti_process(
 columns \code{axis1-3} and \code{counts}}
 
 \item{lfe_select}{Apply the Actigraph Low Frequency Extension filter.
-See \code{agcounts::calculate_counts()}
-higher values are higher levels of verbosity.}
+See \link[agcounts:calculate_counts]{agcounts::calculate_counts}}
 
 \item{method}{Method for detecting non-wear, either "choi" or "troiano",
 corresponding to \code{actigraph.sleepr::apply_choi()} or
@@ -29,17 +31,36 @@ corresponding to \code{actigraph.sleepr::apply_choi()} or
 (axis1, axis2, axis3) is used to measure activity;
 otherwise the axis1 value is used.}
 
-\item{verbose}{print diagnostic messages.  Either logical or integer, where}
+\item{calibrate}{Logical. If \code{TRUE}, the data will be calibrated using \code{\link[=acti_calibrate]{acti_calibrate()}}}
+
+\item{verbose}{print diagnostic messages.  Either logical or integer, where
+higher values are higher levels of verbosity.}
 
 \item{...}{additional arguments to pass to \code{actigraph.sleepr} function}
+
+\item{min_required}{Number of minutes required in a day to be called \code{included}. No
+day inclusion is run if \code{NULL}.}
+
+\item{round_digits}{Number of decimal places \code{X}/\code{Y}/\code{Z} are rounded to
+(half away from zero) after resampling to 30Hz and before counting.  The
+default \code{NULL} uses \code{3} for GT3X data (read with \code{\link[actiread:acti_read_gt3x]{actiread::acti_read_gt3x()}})
+and does not round other data.  Use \code{NA} to never round.}
 }
 \value{
 A data frame containing activity counts and wear-time indicators.
 }
 \description{
-Process Count Data
+Process Raw data to Counts
+}
+\details{
+To match ActiLife for GT3X files, a GT3X path is read with
+\code{digits = 8} (unless \code{digits} is given in \code{...}), resampled, and then
+rounded to 3 digits.  ActiLife rounds the scaled samples to 3 digits, half
+away from zero.  Reading at 8 digits and then rounding gives exactly those
+values, but rounding values already read at 5 digits does not
+(e.g. \code{0.1234996 -> 0.12350 -> 0.124}).
 }
 \note{
-For \code{acti_process_gt3x}, the \code{...} argument are passed to
-\code{actiread::acti_read_gt3x()}
+For \code{acti_process}, the \code{...} argument are passed to
+\code{\link[actiread:acti_read_gt3x]{actiread::acti_read_gt3x()}}
 }

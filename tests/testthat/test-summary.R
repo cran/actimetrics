@@ -1,20 +1,29 @@
 test_that("summary helpers calculate and fill time correctly", {
   data = make_gap_signal()
 
-  ai_sparse = acti_calculate_ai(data, ensure_all_time = FALSE, verbose = TRUE)
-  ai_full = acti_calculate_ai(data, ensure_all_time = TRUE, verbose = TRUE)
+  # make_gap_signal() is 1 Hz, so AI is NA with a warning
+  expect_warning(
+    ai_sparse <- acti_calculate_ai(data, ensure_all_time = FALSE, verbose = TRUE),
+    "fewer than 2 samples")
+  expect_warning(
+    ai_full <- acti_calculate_ai(data, ensure_all_time = TRUE, verbose = TRUE),
+    "fewer than 2 samples")
   expect_equal(nrow(ai_sparse) + 1L, nrow(ai_full))
   expect_true("AI" %in% names(ai_full))
 
-  ai_index = acti_calculate_activity_index(
-    data,
-    ensure_all_time = FALSE,
-    verbose = TRUE
-  )
+  expect_warning(
+    ai_index <- acti_calculate_activity_index(
+      data,
+      ensure_all_time = FALSE,
+      verbose = TRUE
+    ),
+    "fewer than 2 samples")
   expect_equal(ai_sparse, ai_index)
 
   dt = data.table::as.data.table(data)
-  ai_dt = acti_calculate_ai(dt, ensure_all_time = FALSE, verbose = TRUE)
+  expect_warning(
+    ai_dt <- acti_calculate_ai(dt, ensure_all_time = FALSE, verbose = TRUE),
+    "fewer than 2 samples")
   expect_true(data.table::is.data.table(ai_dt))
 
   mad = acti_calculate_mad(data, ensure_all_time = FALSE, verbose = TRUE)
@@ -71,6 +80,34 @@ test_that("calculate_measures combines summary outputs", {
   expect_true("AC" %in% names(measures))
   expect_true(any(grepl("MIMS", names(measures))))
   expect_true("flags" %in% names(measures))
+})
+
+test_that("MIMS and combined measures ignore additional sensor columns", {
+  skip_if_not_installed("MIMSunit")
+
+  data = make_regular_signal(12000)
+  with_sensors = data
+  with_sensors$light = rep(c(100, 200), length.out = nrow(data))
+  with_sensors$temperature = rep(c(20, 21), length.out = nrow(data))
+
+  mims_args = list(dynamic_range = c(-2, 2), ensure_all_time = FALSE)
+  expect_equal(
+    do.call(acti_calculate_mims, c(list(data = with_sensors), mims_args)),
+    do.call(acti_calculate_mims, c(list(data = data), mims_args))
+  )
+
+  measure_args = list(
+    calculate_ac = FALSE,
+    flag_data = FALSE,
+    fix_zeros = FALSE,
+    dynamic_range = c(-2, 2),
+    ensure_all_time = FALSE,
+    verbose = FALSE
+  )
+  expect_equal(
+    do.call(acti_calculate_measures, c(list(data = with_sensors), measure_args)),
+    do.call(acti_calculate_measures, c(list(data = data), measure_args))
+  )
 })
 
 test_that("data.table input stays data.table for summary branches", {

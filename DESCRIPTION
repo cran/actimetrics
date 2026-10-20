@@ -1,7 +1,7 @@
 Type: Package
 Package: actimetrics
 Title: Create Metrics Actigraphy and Activity Analysis
-Version: 0.4.0
+Version: 0.9.0
 Authors@R: c(
     person(given = "John",
            family = "Muschelli",
@@ -19,20 +19,21 @@ Description: Provides functions for calibrating, counting, and summarizing
 License: GPL-3
 Depends: R (>= 4.1.0)
 Suggests: testthat, utils, covr, knitr, httr, rmarkdown, MIMSunit,
-        data.table, reticulate, stepcount (>= 0.6.0), actigraph.sleepr
-        (>= 0.3.1), agcounts (>= 0.6.7), callr
+        data.table, reticulate, stepcount (>= 0.6.0), agcounts (>=
+        0.6.7), callr
 Encoding: UTF-8
 VignetteBuilder: knitr
-Imports: actibase, actiread, dplyr, lubridate, assertthat, purrr,
-        tibble, rlang, stats, tidyr, walking (>= 0.8.0), methods
+Imports: actibase, actiread, actigraph.sleepr (>= 0.3.1), dplyr,
+        lubridate, assertthat, purrr, readr, tibble, rlang, stats,
+        tidyr, walking (>= 0.8.0), methods
 LazyData: true
 Config/roxygen2/version: 8.0.0
 URL: https://jhuwit.github.io/actimetrics/
 BugReports: https://github.com/jhuwit/actimetrics/issues
 NeedsCompilation: no
-Packaged: 2026-09-08 16:17:38 UTC; johnmuschelli
+Packaged: 2026-10-20 15:45:28 UTC; johnmuschelli
 Author: John Muschelli [aut, cre] (ORCID:
     <https://orcid.org/0000-0001-6469-1750>)
 Maintainer: John Muschelli <muschellij2@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-09-17 09:10:15 UTC
+Date/Publication: 2026-10-20 16:00:02 UTC

@@ -70,6 +70,33 @@ test_that("acti_calculate_stepcount keeps missing steps and walking as NA", {
   expect_identical(out$walking, c(NA, TRUE))
 })
 
+test_that("acti_calculate_stepcount returns times in the input time zone", {
+  data = tibble::tibble(
+    time = as.POSIXct("2013-06-10 19:30:00", tz = "Europe/London") + 0:2,
+    X = 0, Y = 0, Z = 1
+  )
+  attr(data, "sample_rate") = 1L
+  # stepcount reports naive local clock times, which R labels UTC
+  times = as.POSIXct("2013-06-10 19:30:00", tz = "UTC") + c(0, 30, 60, 90)
+  testthat::local_mocked_bindings(
+    stepcount = function(data, sample_rate, ...) {
+      list(
+        walking = tibble::tibble(time = times, walking = c(0, 1, 0, 1)),
+        steps = tibble::tibble(time = times, steps = c(0, 2, 0, 4))
+      )
+    },
+    .package = "stepcount"
+  )
+  out = acti_calculate_stepcount(data)
+  expect_identical(attr(out$time, "tzone"), "Europe/London")
+  expect_equal(out$time[1], data$time[1])
+  expect_identical(out$steps, c(2, 4))
+
+  out = acti_calculate_stepcount(data, tz = "UTC")
+  expect_identical(attr(out$time, "tzone"), "UTC")
+  expect_identical(format(out$time[1]), "2013-06-10 19:30:00")
+})
+
 test_that("acti_calculate_verisense resolves a single method", {
   data = tibble::tibble(
     time = as.POSIXct("2020-01-01", tz = "UTC") + 0:2,
@@ -130,6 +157,29 @@ test_that("axis-based scoring requires axis1 instead of VM/sqrt(3)", {
   # reproduce the magnitude exactly
   std = acti_standardize_actigraph.sleepr(vm_only)
   expect_equal(sqrt(std$axis1^2 + std$axis2^2 + std$axis3^2), std$counts)
+})
+
+test_that("sleepr helpers do not add a vector.magnitude column", {
+  epochs = actimetrics::acti_count_data
+  expect_false("vector.magnitude" %in% names(epochs))
+  expect_false("vector.magnitude" %in% names(acti_standardize_actigraph.sleepr(epochs)))
+  expect_false("vector.magnitude" %in% names(acti_calculate_wear(epochs)))
+  expect_false("vector.magnitude" %in% names(acti_apply_cole_kripke(epochs)))
+  expect_false("vector.magnitude" %in% names(acti_apply_sadeh(epochs)))
+})
+
+test_that("Cole-Kripke and Sadeh do not leave the scoring `count` column", {
+  epochs = actimetrics::acti_count_data
+  ck = acti_apply_cole_kripke(epochs)
+  sadeh = acti_apply_sadeh(epochs)
+  expect_false("count" %in% names(ck))
+  expect_false("count" %in% names(sadeh))
+  expect_equal(ck$counts, epochs$counts)
+
+  # a user `count` column is kept, not overwritten
+  epochs$count = seq_len(nrow(epochs))
+  expect_equal(acti_apply_cole_kripke(epochs)$count, epochs$count)
+  expect_equal(acti_apply_sadeh(epochs)$count, epochs$count)
 })
 
 test_that("Cole-Kripke and Sadeh score the axis1 counts", {
@@ -424,4 +474,15 @@ test_that("acti_calculate_counts rounds XYZ with round_digits", {
                           round_digits = 1.5),
     "round_digits"
   )
+})
+
+test_that("epoch/unit arguments accept any acti_standardize_epoch() form", {
+  expect_equal(n_in_interval("1min", sample_rate = 10), 600)
+  expect_equal(n_in_interval(30, sample_rate = 10), 300)
+  times = as.POSIXct("2020-01-01 00:00:00", tz = "UTC") + c(0, 15)
+  data = tibble::tibble(HEADER_TIME_STAMP = times, value = 1:2)
+  # seq() does not understand "5 seconds", so this used to error
+  out = join_all_time(data, "5 seconds", ensure_all_time = TRUE)
+  expect_equal(nrow(out), 4L)
+  expect_equal(nrow(join_all_time(data, 5, ensure_all_time = TRUE)), 4L)
 })

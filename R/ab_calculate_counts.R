@@ -13,7 +13,8 @@ fix_first_second_function = function(data, sample_rate = NULL, epoch = 60L) {
          call. = FALSE)
   }
   tz = lubridate::tz(t1)
-  data_start = lubridate::floor_date(t1, paste(epoch, "secs"))
+  data_start = lubridate::floor_date(
+    t1, acti_standardize_epoch(epoch, output = "character"))
   offset = as.numeric(difftime(t1, data_start, units = "secs"))
   # number of sample-grid points in [data_start, t1); the tolerance avoids
   # floating point adding a sample at t1 itself
@@ -75,8 +76,9 @@ round_xyz = function(data, round_digits, prefix) {
 #' @return A `data.frame` of transformed data
 #' @param verbose print diagnostic messages.  Either logical or integer, where
 #' higher values are higher levels of verbosity.
-#' @param epoch epoch length in seconds.  Default is 60 seconds.
-#' See [agcounts::calculate_counts]
+#' @param epoch epoch length, either in seconds or a string such as `"1 min"`
+#' (see [actibase::acti_standardize_epoch()]); must be a whole number of
+#' seconds.  Default is 60 seconds.  See [agcounts::calculate_counts]
 #' @param lfe_select Apply the Actigraph Low Frequency Extension filter.
 #' See [agcounts::calculate_counts]
 #' @param resample (recommended) resample the data to 30Hz using
@@ -113,7 +115,18 @@ acti_calculate_counts = function(
     fix_first_second = TRUE,
     round_digits = NULL
 ) {
-  rlang::check_installed("agcounts")
+  # rlang::check_installed("agcounts")
+  # partial = TRUE avoids running agcounts's .onLoad (reticulate/Python)
+  if (!requireNamespace("agcounts", quietly = TRUE, partial = TRUE)) {
+    stop("Package 'agcounts' is required but is not installed.")
+  }
+  epoch = acti_standardize_epoch(epoch)
+  assertthat::assert_that(
+    assertthat::is.count(epoch),
+    msg = "`epoch` must be a whole number of seconds."
+  )
+  epoch = as.integer(epoch)
+  epoch_unit = acti_standardize_epoch(epoch, output = "character")
   vector.magnitude = NULL
   rm(list = c("vector.magnitude"))
 
@@ -154,7 +167,7 @@ acti_calculate_counts = function(
     dplyr::rename(counts = vector.magnitude)
   # to deal with https://github.com/bhelsel/agcounts/issues/42
   counts = counts |>
-    dplyr::mutate(time = lubridate::floor_date(time, unit = paste0(epoch, " seconds"))) |>
+    dplyr::mutate(time = lubridate::floor_date(time, unit = epoch_unit)) |>
     dplyr::group_by(time) |>
     dplyr::summarise(dplyr::across(dplyr::everything(), function(x) sum(x, na.rm = TRUE))) |>
     dplyr::ungroup()

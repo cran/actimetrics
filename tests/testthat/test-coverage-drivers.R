@@ -108,7 +108,7 @@ test_that("activity measure helpers cover tibble and data.table branches", {
 
 test_that("measure wrappers fail fast when dependencies are absent", {
   testthat::local_mocked_bindings(
-    requireNamespace = function(package, quietly = TRUE) {
+    requireNamespace = function(package, quietly = TRUE, ...) {
       if (package == "agcounts") {
         FALSE
       } else {
@@ -137,7 +137,7 @@ test_that("measure wrappers fail fast when dependencies are absent", {
 
 test_that("measure wrappers fail when MIMS is unavailable", {
   testthat::local_mocked_bindings(
-    requireNamespace = function(package, quietly = TRUE) {
+    requireNamespace = function(package, quietly = TRUE, ...) {
       if (package == "MIMSunit") {
         FALSE
       } else {
@@ -304,14 +304,16 @@ test_that("sleepr standardization and MIMS helpers cover reconstruction branches
     counts = c(1, 2)
   )
   out_counts = actimetrics:::acti_standardize_actigraph.sleepr(sleep_counts)
-  expect_true(all(c("timestamp", "vector.magnitude", "axis1", "axis2", "axis3") %in% names(out_counts)))
+  expect_true(all(c("timestamp", "axis1", "axis2", "axis3") %in% names(out_counts)))
+  expect_false("vector.magnitude" %in% names(out_counts))
 
   sleep_count = data.frame(
     timestamp = as.POSIXct(c("2020-01-01 00:00:00", "2020-01-01 00:01:00"), tz = "UTC"),
     count = c(3, 4)
   )
   out_count = actimetrics:::acti_standardize_actigraph.sleepr(sleep_count)
-  expect_equal(out_count$vector.magnitude, c(3, 4))
+  expect_false("vector.magnitude" %in% names(out_count))
+  expect_equal(out_count$axis1, c(3, 4) / sqrt(3))
 
   testthat::local_mocked_bindings(
     extrapolate = function(data, dynamic_range, noise_level, k, spar) {
@@ -386,7 +388,7 @@ test_that("sleepr standardization and MIMS helpers cover reconstruction branches
 
 test_that("mims helpers error when the dependency is unavailable", {
   testthat::local_mocked_bindings(
-    requireNamespace = function(package, quietly = TRUE) FALSE,
+    requireNamespace = function(package, quietly = TRUE, ...) FALSE,
     .package = "base"
   )
   expect_error(
@@ -428,7 +430,7 @@ test_that("calculate_activity_counts passes a supplied sample rate on", {
 
 test_that("acti_calculate_mims requires MIMSunit", {
   testthat::local_mocked_bindings(
-    requireNamespace = function(package, quietly = TRUE) FALSE,
+    requireNamespace = function(package, quietly = TRUE, ...) FALSE,
     .package = "base"
   )
   expect_error(
